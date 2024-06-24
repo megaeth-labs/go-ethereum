@@ -23,6 +23,8 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -619,6 +621,34 @@ func DeveloperGenesisBlock(gasLimit uint64, faucet common.Address) *Genesis {
 			faucet:                           {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
 		},
 	}
+}
+
+func DeveloperGenesisBlock2(gasLimit uint64, faucet common.Address, genesisPath string) *Genesis {
+	// Override the default period to the user requested one
+	config := *params.AllDevChainProtocolChanges
+
+	// Assemble and return the genesis with the precompiles and faucet pre-funded
+	//const GENESIS_PATH = "/Users/clay/work/run_reth2/optimism/.devnet/genesis-l1.json"
+	if genesisPath == "" {
+		return DeveloperGenesisBlock(gasLimit, faucet)
+	}
+
+	path := genesisPath
+	text, err := os.ReadFile(path)
+	if err != nil {
+		panic("Failed to read path file: %s" + err.Error())
+	}
+	var ret = Genesis{}
+	err = json.Unmarshal(text, &ret)
+	if err != nil {
+		panic(err)
+	}
+	log.Info("genesis", "timestamp", strconv.FormatUint(ret.Timestamp, 10), "config chainId", ret.Config.ChainID.String())
+	ret.Config.ShanghaiTime = config.ShanghaiTime
+	ret.Config.TerminalTotalDifficulty = config.TerminalTotalDifficulty
+	ret.Config.TerminalTotalDifficultyPassed = config.TerminalTotalDifficultyPassed
+	ret.Config.IsDevMode = config.IsDevMode
+	return &ret
 }
 
 func decodePrealloc(data string) GenesisAlloc {

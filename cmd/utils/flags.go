@@ -177,6 +177,11 @@ var (
 		Value:    11500000,
 		Category: flags.DevCategory,
 	}
+	DeveloperGenesisFlag = &cli.StringFlag{
+		Name:     "dev.genesis",
+		Usage:    "Initial genesis file",
+		Category: flags.DevCategory,
+	}
 
 	IdentityFlag = &cli.StringFlag{
 		Name:     "identity",
@@ -1868,7 +1873,8 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		log.Info("Using developer account", "address", developer.Address)
 
 		// Create a new developer genesis block or reuse existing one
-		cfg.Genesis = core.DeveloperGenesisBlock(ctx.Uint64(DeveloperGasLimitFlag.Name), developer.Address)
+		genesisPath := ctx.String(DeveloperGenesisFlag.Name)
+		cfg.Genesis = core.DeveloperGenesisBlock2(ctx.Uint64(DeveloperGasLimitFlag.Name), developer.Address, genesisPath)
 		if ctx.IsSet(DataDirFlag.Name) {
 			chaindb := tryMakeReadOnlyDatabase(ctx, stack)
 			if rawdb.ReadCanonicalHash(chaindb, 0) != (common.Hash{}) {
